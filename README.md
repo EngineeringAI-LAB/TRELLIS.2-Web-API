@@ -182,6 +182,57 @@ python app.py
 
 Then, you can access the demo at the address shown in the terminal.
 
+#### Local Meshy-like API Server
+
+[trellis2_api_server.py](trellis2_api_server.py) provides a small self-contained HTTP API for local image-to-3D generation. It is intended for tools such as StoryBlender that already know how to submit Meshy-style image-to-3D jobs and poll for a GLB result.
+
+Start the server from a TRELLIS.2 environment:
+
+```sh
+python trellis2_api_server.py --host 127.0.0.1 --port 7862
+```
+
+The default Meshy-like base URL is:
+
+```text
+http://127.0.0.1:7862/openapi/v1
+```
+
+Useful options:
+
+```sh
+python trellis2_api_server.py \
+  --host 127.0.0.1 \
+  --port 7862 \
+  --max-concurrent 1 \
+  --resolution 1024 \
+  --texture-size 4096 \
+  --decimation-target 1000000
+```
+
+Environment variables with the same defaults are also supported: `TRELLIS2_HOST`, `TRELLIS2_PORT`, `TRELLIS2_MODEL`, `TRELLIS2_OUTPUT_DIR`, `TRELLIS2_MAX_CONCURRENT`, `TRELLIS2_RESOLUTION`, `TRELLIS2_TEXTURE_SIZE`, and `TRELLIS2_DECIMATION_TARGET`.
+
+Endpoints:
+
+- `GET /health`
+- `POST /openapi/v1/image-to-3d`
+- `GET /openapi/v1/image-to-3d/{task_id}`
+
+Example request:
+
+```sh
+curl -X POST http://127.0.0.1:7862/openapi/v1/image-to-3d \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_url": "/absolute/path/to/input.png",
+    "resolution": "1024",
+    "texture_size": 4096,
+    "decimation_target": 1000000
+  }'
+```
+
+The create endpoint returns `{"result": "<task_id>"}`. Poll the task URL until `status` is `SUCCEEDED`; the response then includes `model_urls.glb` and `thumbnail_url`.
+
 ### 2. PBR Texture Generation
 
 Please refer to the [example_texturing.py](example_texturing.py) for an example of how to generate PBR textures for a given 3D shape. Also, you can use the [app_texturing.py](app_texturing.py) to run a web demo for PBR texture generation.
